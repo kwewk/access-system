@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import NavigationBar from '../components/NavigationBar';
 import UsersList from '../components/UsersList';
 import { api } from '../services/api';
+import { useThrottle } from '../hooks/useThrottle';
 
 const AdminPage = () => {
     const [userList, setUserList] = useState([]);
@@ -29,15 +30,17 @@ const AdminPage = () => {
         setTimeout(() => setNotification({ message: '', type: '' }), 3000);
     };
 
-    const handleRemove = async (userId) => {
+    const performDelete = useCallback(async (userId) => {
         try {
             await api.deleteUser(userId);
-            setUserList(userList.filter(u => u.id !== userId));
+            setUserList(prevUsers => prevUsers.filter(u => u.id !== userId));
             showNotification('User successfully deleted', 'success');
         } catch (err) {
             showNotification(err.message || 'Failed to delete user', 'error');
         }
-    };
+    }, []);
+
+    const handleRemove = useThrottle(performDelete, 1000);
 
     const canDelete = (targetUser) => {
         return targetUser.role === 'user';

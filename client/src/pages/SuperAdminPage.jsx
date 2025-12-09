@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUserContext } from '../context/UserContext';
 import NavigationBar from '../components/NavigationBar';
 import UsersList from '../components/UsersList';
 import { api } from '../services/api';
+import { useThrottle } from '../hooks/useThrottle';
 
 const SuperAdminPage = () => {
     const { currentUser } = useUserContext();
@@ -31,27 +32,31 @@ const SuperAdminPage = () => {
         setTimeout(() => setNotification({ message: '', type: '' }), 3000);
     };
 
-    const handleRemove = async (userId) => {
+    const performDelete = useCallback(async (userId) => {
         try {
             await api.deleteUser(userId);
-            setUserList(userList.filter(u => u.id !== userId));
+            setUserList(prevUsers => prevUsers.filter(u => u.id !== userId));
             showNotification('User successfully deleted', 'success');
         } catch (err) {
             showNotification(err.message || 'Failed to delete user', 'error');
         }
-    };
+    }, []);
 
-    const handleRoleUpdate = async (userId, newRole) => {
+    const performRoleChange = useCallback(async (userId, newRole) => {
         try {
             await api.updateUserRole(userId, newRole);
-            setUserList(userList.map(u =>
+            setUserList(prevUsers => prevUsers.map(u =>
                 u.id === userId ? { ...u, role: newRole } : u
             ));
             showNotification(`Role was changed to ${newRole}`, 'success');
         } catch (err) {
             showNotification(err.message || 'Failed to update role', 'error');
         }
-    };
+    }, []);
+
+    // Throttled версії обох операцій
+    const handleRemove = useThrottle(performDelete, 1000);
+    const handleRoleUpdate = useThrottle(performRoleChange, 1000);
 
     const canDelete = (targetUser) => {
         return targetUser.id !== currentUser.id && targetUser.role !== 'superadmin';
