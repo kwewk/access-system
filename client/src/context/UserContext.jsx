@@ -8,20 +8,23 @@ export const UserContextProvider = ({ children }) => {
 
     useEffect(() => {
         const stored = localStorage.getItem('authUser');
-        if (stored) {
+        const token = localStorage.getItem('authToken');
+        if (stored && token) {
             setCurrentUser(JSON.parse(stored));
         }
         setIsLoading(false);
     }, []);
 
-    const authenticate = (userData) => {
+    const authenticate = (userData, token) => {
         setCurrentUser(userData);
         localStorage.setItem('authUser', JSON.stringify(userData));
+        localStorage.setItem('authToken', token);
     };
 
     const disconnect = () => {
         setCurrentUser(null);
         localStorage.removeItem('authUser');
+        localStorage.removeItem('authToken');
     };
 
     return (

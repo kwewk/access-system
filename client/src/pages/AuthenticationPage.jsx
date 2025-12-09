@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserContext } from '../context/UserContext';
-import { mockUsers } from '../data/mockUsers';
+import { api } from '../services/api';
 
 const AuthenticationPage = () => {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -10,36 +10,33 @@ const AuthenticationPage = () => {
     const { authenticate } = useUserContext();
     const navigate = useNavigate();
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         setErrorMsg('');
         setIsProcessing(true);
 
-        setTimeout(() => {
-            const foundUser = mockUsers.find(
-                u => u.email === credentials.email && u.password === credentials.password
-            );
+        try {
+            const response = await api.login(credentials.email, credentials.password);
 
-            if (foundUser) {
-                authenticate(foundUser);
+            authenticate(response.user, response.token);
 
-                switch (foundUser.role) {
-                    case 'superadmin':
-                        navigate('/superadmin');
-                        break;
-                    case 'admin':
-                        navigate('/admin');
-                        break;
-                    case 'user':
-                        navigate('/user');
-                        break;
-                    default:
-                        navigate('/user');
-                }
-            } else {
-                setErrorMsg('Incorrect email or password');
+            switch (response.user.role) {
+                case 'superadmin':
+                    navigate('/superadmin');
+                    break;
+                case 'admin':
+                    navigate('/admin');
+                    break;
+                case 'user':
+                    navigate('/user');
+                    break;
+                default:
+                    navigate('/user');
             }
+        } catch (error) {
+            setErrorMsg(error.message || 'Incorrect email or password');
+        } finally {
             setIsProcessing(false);
-        }, 800);
+        }
     };
 
     return (
@@ -97,8 +94,8 @@ const AuthenticationPage = () => {
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-600">
                     <p className="font-semibold mb-2">Test data:</p>
                     <p>SuperAdmin: sa@example.com / admin123</p>
-                    <p>Admin: a1/a2@example.com / admin123</p>
-                    <p>User: u1/u2@example.com / user123</p>
+                    <p>Admin: a1@example.com / admin123</p>
+                    <p>User: u1@example.com / user123</p>
                 </div>
             </div>
         </div>

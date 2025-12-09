@@ -1,25 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import NavigationBar from '../components/NavigationBar';
 import UsersList from '../components/UsersList';
-import { mockUsers } from '../data/mockUsers';
+import { api } from '../services/api';
 
 const AdminPage = () => {
-    const [userList, setUserList] = useState(mockUsers);
+    const [userList, setUserList] = useState([]);
     const [notification, setNotification] = useState({ message: '', type: '' });
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+        try {
+            setIsLoading(true);
+            const users = await api.getUsers();
+            setUserList(users);
+        } catch (err) {
+            showNotification(err.message || 'Failed to load users', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const showNotification = (message, type) => {
         setNotification({ message, type });
         setTimeout(() => setNotification({ message: '', type: '' }), 3000);
     };
 
-    const handleRemove = (userId) => {
-        setUserList(userList.filter(u => u.id !== userId));
-        showNotification('User successfully deleted', 'success');
+    const handleRemove = async (userId) => {
+        try {
+            await api.deleteUser(userId);
+            setUserList(userList.filter(u => u.id !== userId));
+            showNotification('User successfully deleted', 'success');
+        } catch (err) {
+            showNotification(err.message || 'Failed to delete user', 'error');
+        }
     };
 
     const canDelete = (targetUser) => {
         return targetUser.role === 'user';
     };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50">
+                <NavigationBar />
+                <div className="flex items-center justify-center py-20">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
