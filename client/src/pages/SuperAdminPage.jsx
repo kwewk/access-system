@@ -54,7 +54,6 @@ const SuperAdminPage = () => {
         }
     }, []);
 
-    // Throttled версії обох операцій
     const handleRemove = useThrottle(performDelete, 1000);
     const handleRoleUpdate = useThrottle(performRoleChange, 1000);
 
