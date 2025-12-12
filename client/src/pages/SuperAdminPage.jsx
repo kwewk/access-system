@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { UserPlus } from 'lucide-react';
 import { useUserContext } from '../context/UserContext';
 import NavigationBar from '../components/NavigationBar';
 import UsersList from '../components/UsersList';
+import UserStats from '../components/UserStats';
+import AddUserModal from '../components/AddUserModal';
 import { api } from '../services/api';
 import { useThrottle } from '../hooks/useThrottle';
 
@@ -10,6 +13,7 @@ const SuperAdminPage = () => {
     const [userList, setUserList] = useState([]);
     const [notification, setNotification] = useState({ message: '', type: '' });
     const [isLoading, setIsLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         loadUsers();
@@ -57,6 +61,11 @@ const SuperAdminPage = () => {
     const handleRemove = useThrottle(performDelete, 1000);
     const handleRoleUpdate = useThrottle(performRoleChange, 1000);
 
+    const handleUserAdded = () => {
+        loadUsers();
+        showNotification('User successfully added', 'success');
+    };
+
     const canDelete = (targetUser) => {
         return targetUser.id !== currentUser.id && targetUser.role !== 'superadmin';
     };
@@ -80,12 +89,24 @@ const SuperAdminPage = () => {
         <div className="min-h-screen bg-gray-50">
             <NavigationBar />
             <div className="max-w-7xl mx-auto px-6 py-8">
-                <div className="mb-8">
-                    <h2 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                        Super Admin panel
-                    </h2>
-                    <p className="text-gray-600">Full access: user management and role changes.</p>
+                <div className="mb-8 flex items-center justify-between">
+                    <div>
+                        <h2 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+                            Super Admin panel
+                        </h2>
+                        <p className="text-gray-600">Full access: user management and role changes.</p>
+                    </div>
+
+                    <button
+                        onClick={() => setIsModalOpen(true)}
+                        className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-md hover:shadow-lg font-medium"
+                    >
+                        <UserPlus className="w-5 h-5" />
+                        Add User
+                    </button>
                 </div>
+
+                <UserStats />
 
                 {notification.message && (
                     <div className={`mb-6 p-4 rounded-lg ${
@@ -105,6 +126,13 @@ const SuperAdminPage = () => {
                     canChangeRole={canChangeRole}
                 />
             </div>
+
+            <AddUserModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                onUserAdded={handleUserAdded}
+                allowedRoles={['user', 'admin']}
+            />
         </div>
     );
 };

@@ -52,6 +52,19 @@ export const api = {
         return response.json();
     },
 
+    async getUserStats() {
+        const response = await fetch(`${API_URL}/users/stats`, {
+            headers: getAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to fetch user statistics');
+        }
+
+        return response.json();
+    },
+
     async deleteUser(userId) {
         const response = await fetch(`${API_URL}/users/${userId}`, {
             method: 'DELETE',

@@ -3,6 +3,26 @@ const router = express.Router();
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const { getUsers, getUserById, deleteUser, updateUserRole } = require('../data/users');
 
+router.get('/stats', authenticateToken, (req, res) => {
+    try {
+        const users = getUsers();
+
+        const stats = {
+            total: users.length,
+            byRole: {
+                superadmin: users.filter(u => u.role === 'superadmin').length,
+                admin: users.filter(u => u.role === 'admin').length,
+                user: users.filter(u => u.role === 'user').length
+            },
+            lastUpdated: new Date().toISOString()
+        };
+
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 router.get('/', authenticateToken, (req, res) => {
     try {
         const users = getUsers().map(user => ({
